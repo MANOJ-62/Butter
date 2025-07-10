@@ -136,7 +136,7 @@
     <div class="container">
       <div id="tasteMsg"></div>
       <h1 class="glow">🎉 Happy Birthday, <span class="name">Sathya</span>! 🎂</h1>
-      <p class="subtitle">Even if I can't be there, I will never leave you alone. Your birthday isn’t about place, it’s about the people who love you — and I’m always here. Let's celebrate together! 💖</p>
+      <p class="subtitle">Even if I’m not there, you’re never alone, my dear Butter — your birthday is about the people who love you, and I’m always here. Let’s celebrate together! 💖</p>
       <canvas id="cakeCanvas" width="600" height="600"></canvas>
       <p>Tap the cake to cut it after blowing the candles! 🍰</p>
       <button id="blowButton">Blow Candles 🎈</button>
@@ -146,6 +146,24 @@
         <button onclick="handleAloneAnswer(false)">No</button>
       </div>
       <div id="aloneResponse" style="margin-top: 10px; font-weight: bold; color: #ff4081;"></div>
+      <!-- Fullscreen Greeting Image Modal -->
+<div id="greetingModal" style="
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+">
+  <img src="greeting.jpeg" alt="Greeting" style="max-width: 90%; max-height: 80%; border-radius: 10px; box-shadow: 0 0 20px white;" />
+  <button onclick="closeGreeting()" style="margin-top: 20px; padding: 10px 20px; font-size: 1em; background-color: white; color: #ff4081; border: none; border-radius: 8px; cursor: pointer;">
+    Close
+  </button>
+</div>
+
     </div>
     </div>
   </div>
@@ -168,7 +186,7 @@
     const audio = new Audio('birthday-song.mp3');
 
     const photoImage = new Image();
-    photoImage.src = 'her-photo.jpg';
+    photoImage.src = 'her-photo.jpeg';
     photoImage.onload = () => {
       drawCake();
       startConfetti();
@@ -177,7 +195,7 @@
     const dropZones = {
       eat: { x: 80, y: 300, r: 50 },
       feed: { x: 520, y: 300, r: 50 },
-      hug: { x: 300, y: 520, r: 50 }
+      hug: { x: 300, y: 530, r: 50 }
     };
 
     let messageIndex = 0;
@@ -371,7 +389,7 @@ if (isNearZone(x, y, dropZones.hug, 50)) {
       msgDiv.style.opacity = 1;
       setTimeout(() => {
   msgDiv.style.opacity = 0;
-}, 1000);
+}, 2000);
     }
   }
     }
@@ -484,7 +502,7 @@ function moveDrag(x, y) {
                 messageIndex++;
                  setTimeout(() => {
     msgDiv.style.opacity = 0;
-  }, 1000);
+  }, 2000);
               }, 400);
             }
           }
@@ -498,11 +516,19 @@ function moveDrag(x, y) {
      function handleAloneAnswer(isYes) {
       const responseDiv = document.getElementById("aloneResponse");
       if (isYes) {
-        responseDiv.innerText = "Then Call Me 📞";
+        responseDiv.innerHTML = `<button onclick="openGreeting()">Tap to Open 💌</button>`;
       } else {
         responseDiv.innerText = "I'm happy now 😊";
       }
     }
+
+    function openGreeting() {
+  document.getElementById('greetingModal').style.display = 'flex';
+}
+
+function closeGreeting() {
+  document.getElementById('greetingModal').style.display = 'none';
+}
 
     function burstConfetti() {
       for (let i = 0; i < 50; i++) {
