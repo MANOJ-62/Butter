@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Happy Birthday Sathya 🎂</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #ffdee9, #b5fffc);
+      overflow-x: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      text-align: center;
+    }
+
+    .scale-wrapper {
+      transform: scale(0.8);
+      transform-origin: top center;
+      width: 100vw;
+      height: auto;
+      overflow: visible;
+    }
+
+    .container {
+      margin-top: 20px;
+      position: relative;
+    }
+
+    h1 {
+      color: #ff4081;
+      margin-bottom: 5px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    p.subtitle {
+      color: #ff4081;
+      font-size: 18px;
+      margin-top: 0;
+    }
+
+    canvas {
+      border: 5px solid #ff4081;
+      background-color: transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 25px rgba(255, 64, 129, 0.6);
+    }
+
+    button {
+      margin: 10px;
+      padding: 12px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #ff4081;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #ff79b0;
+    }
+    
+    #message {
+  position: fixed;
+  bottom: 1100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(255, 255, 255, 0.95);
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  font-size: 1.1em;
+  color: #2e7d32;
+  font-weight: bold;
+  transition: opacity 0.8s ease;
+  opacity: 1;
+  max-width: 90%;
+}
+
+
+    #tasteMsg {
+      font-size: 1.2em;
+      color: green;
+      margin-bottom: 10px;
+      font-weight: bold;
+      transition: opacity 0.8s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="message"></div>
+  <div class="scale-wrapper">
+    <div class="container">
+      <div id="tasteMsg"></div>
+      <h1>🎉 Happy Birthday, Sathya! 🎂</h1>
+      <p class="subtitle">Even if I can't be there, I will never leave you alone. Let's celebrate together! 💖</p>
+      <canvas id="cakeCanvas" width="600" height="600"></canvas>
+      <p>Tap the cake to cut it after blowing the candles! 🍰</p>
+      <button id="blowButton">Blow Candles 🎈</button>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('cakeCanvas');
+    const ctx = canvas.getContext('2d');
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const radius = 150;
+
+    let slices = [];
+    const numSlices = 6;
+    let cakeCut = false;
+    let candleLit = true;
+
+    const numCandles = 6;
+    const audio = new Audio('birthday-song.mp3');
+
+    const photoImage = new Image();
+    photoImage.src = 'her-photo.jpg';
+    photoImage.onload = () => {
+      drawCake();
+      startConfetti();
+    };
+
+    const dropZones = {
+      eat: { x: 80, y: 300, r: 50 },   
+      feed: { x: 520, y: 300, r: 50 }    
+    };
+
+    let messageIndex = 0;
+    const birthdayMessages = [
+      "This cake might be virtual, but my wishes are real and sweeter than ever. 🎂✨",
+      "Your family might be far, but my heart is always close. 💝",
+      "No matter where you are, you'll never be alone on your special day.",
+      "Distance can't stop us from celebrating you, Butter. 🌟"
+    ];
+
+    function createSlices() {
+      const angleStep = (2 * Math.PI) / numSlices;
+      slices = [];
+      for (let i = 0; i < numSlices; i++) {
+        slices.push({
+          angleStart: i * angleStep,
+          angleEnd: (i + 1) * angleStep,
+          offsetX: 0,
+          offsetY: 0,
+          dragging: false,
+          eaten: false
+        });
+      }
+    }
+
+    function drawZones() {
+      ctx.beginPath();
+      ctx.arc(dropZones.eat.x, dropZones.eat.y, dropZones.eat.r, 0, Math.PI * 2);
+      const tasteGradient = ctx.createRadialGradient(dropZones.eat.x, dropZones.eat.y, 10, dropZones.eat.x, dropZones.eat.y, dropZones.eat.r);
+      tasteGradient.addColorStop(0, "#ffefba");
+      tasteGradient.addColorStop(1, "#ffffff");
+      ctx.fillStyle = tasteGradient;
+      ctx.fill();
+      ctx.strokeStyle = "#ff4081";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#ff4081";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText("😋Taste", dropZones.eat.x - 30, dropZones.eat.y + 5);
+
+      ctx.beginPath();
+      ctx.arc(dropZones.feed.x, dropZones.feed.y, dropZones.feed.r, 0, Math.PI * 2);
+      const shareGradient = ctx.createRadialGradient(dropZones.feed.x, dropZones.feed.y, 1, dropZones.feed.x, dropZones.feed.y, dropZones.feed.r);
+      shareGradient.addColorStop(0, "#c2ffd8");
+      shareGradient.addColorStop(1, "#ffffff");
+      ctx.fillStyle = shareGradient;
+      ctx.fill();
+      ctx.strokeStyle = "#3F51B5";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#3F51B5";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText("😍Feed Him", dropZones.feed.x - 30, dropZones.feed.y + 5);
+    }
+
+    function drawFullCake() {
+      ctx.beginPath();
+      ctx.arc(centerX, centerY + 20, radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#d2691e';
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffb6c1';
+      ctx.fill();
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius - 40, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(photoImage, centerX - (radius - 40), centerY - (radius - 40), (radius - 40) * 2, (radius - 40) * 2);
+      ctx.restore();
+    }
+
+    function isNearZone(x, y, zone, buffer = 70) {
+      const dx = x - zone.x;
+      const dy = y - zone.y;
+      return Math.sqrt(dx * dx + dy * dy) < buffer;
+    }
+
+    function drawCake() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawZones();
+
+      if (!cakeCut) {
+        drawFullCake();
+        if (candleLit) drawCandles();
+        return;
+      }
+
+      slices.forEach(slice => {
+        if (slice.eaten) return;
+
+        ctx.save();
+        ctx.translate(slice.offsetX, slice.offsetY);
+
+        const currentX = centerX + slice.offsetX;
+        const currentY = centerY + slice.offsetY;
+
+        const nearEat = isNearZone(currentX, currentY, dropZones.eat);
+        const nearFeed = isNearZone(currentX, currentY, dropZones.feed);
+
+        if (nearEat || nearFeed) {
+          ctx.translate(centerX, centerY);
+          ctx.scale(0.8, 0.8);
+          ctx.translate(-centerX, -centerY);
+        }
+
+        if (slice.dragging) {
+        ctx.translate(centerX, centerY);
+        ctx.scale(0.5, 0.5); // Shrink to 50%
+        ctx.translate(-centerX, -centerY);
+        }
+
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, slice.angleStart, slice.angleEnd);
+        ctx.closePath();
+        ctx.fillStyle = '#ffb6c1';
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius - 40, slice.angleStart, slice.angleEnd);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(photoImage, centerX - (radius - 40), centerY - (radius - 40), (radius - 40) * 2, (radius - 40) * 2);
+        ctx.restore();
+      });
+
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 3;
+      slices.forEach(slice => {
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, slice.angleStart, slice.angleStart);
+        ctx.stroke();
+      });
+    }
+
+    function drawCandles() {
+      for (let i = 0; i < numCandles; i++) {
+        const angle = (2 * Math.PI / numCandles) * i;
+        const x = centerX + (radius - 30) * Math.cos(angle);
+        const y = centerY + (radius - 30) * Math.sin(angle);
+
+        ctx.fillStyle = '#FF5733';
+        ctx.fillRect(x - 3, y - 20, 6, 20);
+
+        if (candleLit) {
+          ctx.beginPath();
+          ctx.arc(x, y - 25, 6, 0, Math.PI * 2);
+          ctx.fillStyle = 'orange';
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(x, y - 25, 3, 0, Math.PI * 2);
+          ctx.fillStyle = 'yellow';
+          ctx.fill();
+        }
+      }
+    }
+
+    document.getElementById('blowButton').addEventListener('click', () => {
+      candleLit = false;
+      audio.play();
+      drawCake();
+    });
+
+    function handleCut(x, y) {
+      if (!cakeCut && !candleLit) {
+        cakeCut = true;
+        createSlices();
+        document.getElementById("tasteMsg").innerText = "Cake is ready! Drag a piece to taste it! 🍰";
+        drawCake();
+      }
+    }
+
+    canvas.addEventListener('click', (e) => handleCut(e.offsetX, e.offsetY));
+
+    function startDrag(x, y) {
+      slices.forEach(slice => {
+        if (slice.eaten) return;
+        const localX = x - slice.offsetX;
+        const localY = y - slice.offsetY;
+        const dx = localX - centerX;
+        const dy = localY - centerY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        let angle = Math.atan2(dy, dx);
+        if (angle < 0) angle += 2 * Math.PI;
+
+        if (distance < radius && angle > slice.angleStart && angle < slice.angleEnd) {
+          slice.dragging = true;
+          slice.startX = x;
+          slice.startY = y;
+        }
+      });
+    }
+
+    let overlappingSlice = slices.find(s => {
+  if (s === slice || s.eaten) return false;
+  const dx = (centerX + slice.offsetX) - (centerX + s.offsetX);
+  const dy = (centerY + slice.offsetY) - (centerY + s.offsetY);
+  return Math.sqrt(dx * dx + dy * dy) < 30; // Small collision radius
+});
+
+if (overlappingSlice) {
+  slice.eaten = true; // Auto drop to "eat"
+  showMessage(); // trigger message
+}
+
+function showMessage() {
+  if (messageIndex < birthdayMessages.length) {
+    const msgDiv = document.getElementById("message");
+    msgDiv.style.opacity = 0;
+    setTimeout(() => {
+      msgDiv.innerText = birthdayMessages[messageIndex];
+      msgDiv.style.opacity = 1;
+      messageIndex++;
+    }, 400);
+  }
+}
+
+
+
+    function moveDrag(x, y) {
+      slices.forEach(slice => {
+        if (slice.dragging) {
+          slice.offsetX += x - slice.startX;
+          slice.offsetY += y - slice.startY;
+          slice.startX = x;
+          slice.startY = y;
+          drawCake();
+        }
+      });
+    }
+
+    function endDrag(x, y) {
+      slices.forEach(slice => {
+        if (slice.dragging) {
+          let interacted = false;
+
+          if (isNearZone(centerX + slice.offsetX, centerY + slice.offsetY, dropZones.eat, 60)) {
+            slice.eaten = true;
+            interacted = true;
+          } else if (isNearZone(centerX + slice.offsetX, centerY + slice.offsetY, dropZones.feed, 60)) {
+            slice.eaten = true;
+            interacted = true;
+            const remaining = slices.filter(s => !s.eaten);
+            if (remaining.length > 0) {
+              const first = remaining[0];
+              first.offsetX = dropZones.eat.x - centerX;
+              first.offsetY = dropZones.eat.y - centerY;
+              first.eaten = true;
+            }
+          }
+
+          if (interacted && messageIndex < birthdayMessages.length) {
+            const msgDiv = document.getElementById("message");
+            msgDiv.style.opacity = 0;
+            setTimeout(() => {
+              msgDiv.innerText = birthdayMessages[messageIndex];
+              msgDiv.style.opacity = 1;
+              messageIndex++;
+            }, 400);
+          }
+        }
+
+        slice.dragging = false;
+      });
+
+      drawCake();
+    }
+
+    canvas.addEventListener('mousedown', (e) => startDrag(e.offsetX, e.offsetY));
+    canvas.addEventListener('mousemove', (e) => moveDrag(e.offsetX, e.offsetY));
+    canvas.addEventListener('mouseup', (e) => endDrag(e.offsetX, e.offsetY));
+
+    canvas.addEventListener('touchstart', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      const y = e.touches[0].clientY - rect.top;
+      startDrag(x, y);
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      const y = e.touches[0].clientY - rect.top;
+      moveDrag(x, y);
+      e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.changedTouches[0].clientX - rect.left;
+      const y = e.changedTouches[0].clientY - rect.top;
+      endDrag(x, y);
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      slices.forEach(slice => slice.dragging = false);
+    });
+
+    // 🎊 Confetti
+    let confetti = [];
+    function startConfetti() {
+      setInterval(() => {
+        confetti.push({
+          x: Math.random() * canvas.width,
+          y: 0,
+          r: Math.random() * 6 + 4,
+          d: Math.random() * 10 + 5,
+          color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+          tilt: Math.random() * 10 - 10
+        });
+      }, 300);
+      requestAnimationFrame(updateConfetti);
+    }
+
+    function updateConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCake();
+
+      confetti.forEach((c, i) => {
+        ctx.beginPath();
+        ctx.arc(c.x + c.tilt, c.y, c.r, 0, Math.PI * 2);
+        ctx.fillStyle = c.color;
+        ctx.fill();
+        c.y += c.d * 0.5;
+        c.tilt += Math.sin(c.y * 0.1);
+        if (c.y > canvas.height) confetti.splice(i, 1);
+      });
+      requestAnimationFrame(updateConfetti);
+    }
+  </script>
+</body>
+</html>
