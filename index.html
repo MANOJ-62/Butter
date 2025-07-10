@@ -26,15 +26,29 @@
       position: relative;
     }
 
-    h1 {
-      color: #ff4081;
+    h1.glow {
+      color: #1b1b1b;
       margin-bottom: 5px;
       animation: bounce 2s infinite;
+    }
+
+    .glow .name {
+      animation: pulseGlow 2s infinite ease-in-out;
+      font-weight: bold;
     }
 
     @keyframes bounce {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        text-shadow: 0 0 5px #ff4081, 0 0 10px #ff4081, 0 0 20px #ff79b0;
+      }
+      50% {
+        text-shadow: 0 0 10px #ff4081, 0 0 15px #ff4081, 0 0 30px #ff79b0;
+      }
     }
 
     p.subtitle {
@@ -65,25 +79,24 @@
     button:hover {
       background-color: #ff79b0;
     }
-    
-    #message {
-  position: fixed;
-  bottom: 1100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(255, 255, 255, 0.95);
-  padding: 10px 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-  z-index: 1000;
-  font-size: 1.1em;
-  color: #2e7d32;
-  font-weight: bold;
-  transition: opacity 0.8s ease;
-  opacity: 1;
-  max-width: 90%;
-}
 
+    #message {
+      position: fixed;
+      bottom: 34%;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(255, 255, 255, 0.95);
+      padding: 10px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+      font-size: 1.1em;
+      color: #2e7d32;
+      font-weight: bold;
+      transition: opacity 0.8s ease;
+      opacity: 1;
+      max-width: 90%;
+    }
 
     #tasteMsg {
       font-size: 1.2em;
@@ -92,6 +105,29 @@
       font-weight: bold;
       transition: opacity 0.8s ease;
     }
+
+    /* Floating Hearts */
+    .heart {
+      position: fixed;
+      width: 20px;
+      height: 20px;
+      background: url('https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/2764.svg') no-repeat center center / contain;
+      animation: floatHearts 6s linear infinite;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.8;
+    }
+
+    @keyframes floatHearts {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-800px) scale(1.5);
+        opacity: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -99,16 +135,24 @@
   <div class="scale-wrapper">
     <div class="container">
       <div id="tasteMsg"></div>
-      <h1>🎉 Happy Birthday, Sathya! 🎂</h1>
-      <p class="subtitle">Even if I can't be there, I will never leave you alone. Let's celebrate together! 💖</p>
+      <h1 class="glow">🎉 Happy Birthday, <span class="name">Sathya</span>! 🎂</h1>
+      <p class="subtitle">Even if I can't be there, I will never leave you alone. Your birthday isn’t about place, it’s about the people who love you — and I’m always here. Let's celebrate together! 💖</p>
       <canvas id="cakeCanvas" width="600" height="600"></canvas>
       <p>Tap the cake to cut it after blowing the candles! 🍰</p>
       <button id="blowButton">Blow Candles 🎈</button>
+      <div id="aloneContainer" style="display: none; margin-top: 20px;">
+        <p style="font-size: 1.1em;">Still feeling alone?</p>
+        <button onclick="handleAloneAnswer(true)">Yes</button>
+        <button onclick="handleAloneAnswer(false)">No</button>
+      </div>
+      <div id="aloneResponse" style="margin-top: 10px; font-weight: bold; color: #ff4081;"></div>
+    </div>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById('cakeCanvas');
+    canvas.style.touchAction = "none";
     const ctx = canvas.getContext('2d');
     const centerX = canvas.width / 2;
     const centerY = canvas.height / 2;
@@ -118,6 +162,7 @@
     const numSlices = 6;
     let cakeCut = false;
     let candleLit = true;
+    let firstSliceInteracted = false;
 
     const numCandles = 6;
     const audio = new Audio('birthday-song.mp3');
@@ -130,8 +175,9 @@
     };
 
     const dropZones = {
-      eat: { x: 80, y: 300, r: 50 },   
-      feed: { x: 520, y: 300, r: 50 }    
+      eat: { x: 80, y: 300, r: 50 },
+      feed: { x: 520, y: 300, r: 50 },
+      hug: { x: 300, y: 520, r: 50 }
     };
 
     let messageIndex = 0;
@@ -141,6 +187,10 @@
       "No matter where you are, you'll never be alone on your special day.",
       "Distance can't stop us from celebrating you, Butter. 🌟"
     ];
+
+     // ✅ New tracking variables
+    let interactionCount = 0;
+    let aloneShown = false;
 
     function createSlices() {
       const angleStep = (2 * Math.PI) / numSlices;
@@ -158,6 +208,7 @@
     }
 
     function drawZones() {
+      // Draw "Taste"
       ctx.beginPath();
       ctx.arc(dropZones.eat.x, dropZones.eat.y, dropZones.eat.r, 0, Math.PI * 2);
       const tasteGradient = ctx.createRadialGradient(dropZones.eat.x, dropZones.eat.y, 10, dropZones.eat.x, dropZones.eat.y, dropZones.eat.r);
@@ -172,6 +223,7 @@
       ctx.font = "bold 14px Arial";
       ctx.fillText("😋Taste", dropZones.eat.x - 30, dropZones.eat.y + 5);
 
+      // Draw "Feed Him"
       ctx.beginPath();
       ctx.arc(dropZones.feed.x, dropZones.feed.y, dropZones.feed.r, 0, Math.PI * 2);
       const shareGradient = ctx.createRadialGradient(dropZones.feed.x, dropZones.feed.y, 1, dropZones.feed.x, dropZones.feed.y, dropZones.feed.r);
@@ -185,6 +237,22 @@
       ctx.fillStyle = "#3F51B5";
       ctx.font = "bold 14px Arial";
       ctx.fillText("😍Feed Him", dropZones.feed.x - 30, dropZones.feed.y + 5);
+
+      // Draw "Hug"
+      ctx.beginPath();
+      ctx.arc(dropZones.hug.x, dropZones.hug.y, dropZones.hug.r, 0, Math.PI * 2);
+      const hugGradient = ctx.createRadialGradient(dropZones.hug.x, dropZones.hug.y, 1, dropZones.hug.x, dropZones.hug.y, dropZones.hug.r);
+      hugGradient.addColorStop(0, "#ffe6ff");
+      hugGradient.addColorStop(1, "#ffffff");
+      ctx.fillStyle = hugGradient;
+      ctx.fill();
+      ctx.strokeStyle = "#9C27B0";
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = "#9C27B0";
+      ctx.font = "bold 14px Arial";
+      ctx.fillText("🤗 Hug", dropZones.hug.x - 20, dropZones.hug.y + 5);
+
     }
 
     function drawFullCake() {
@@ -224,28 +292,23 @@
 
       slices.forEach(slice => {
         if (slice.eaten) return;
-
         ctx.save();
         ctx.translate(slice.offsetX, slice.offsetY);
 
         const currentX = centerX + slice.offsetX;
         const currentY = centerY + slice.offsetY;
 
-        const nearEat = isNearZone(currentX, currentY, dropZones.eat);
-        const nearFeed = isNearZone(currentX, currentY, dropZones.feed);
-
-        if (nearEat || nearFeed) {
+        if (isNearZone(currentX, currentY, dropZones.eat) || isNearZone(currentX, currentY, dropZones.feed)) {
           ctx.translate(centerX, centerY);
           ctx.scale(0.8, 0.8);
           ctx.translate(-centerX, -centerY);
         }
 
         if (slice.dragging) {
-        ctx.translate(centerX, centerY);
-        ctx.scale(0.5, 0.5); // Shrink to 50%
-        ctx.translate(-centerX, -centerY);
+          ctx.translate(centerX, centerY);
+          ctx.scale(0.5, 0.5);
+          ctx.translate(-centerX, -centerY);
         }
-
 
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
@@ -295,79 +358,90 @@
       }
     }
 
-    document.getElementById('blowButton').addEventListener('click', () => {
-      candleLit = false;
-      audio.play();
-      drawCake();
-    });
-
     function handleCut(x, y) {
       if (!cakeCut && !candleLit) {
         cakeCut = true;
         createSlices();
         document.getElementById("tasteMsg").innerText = "Cake is ready! Drag a piece to taste it! 🍰";
         drawCake();
-      }
+      }else {
+if (isNearZone(x, y, dropZones.hug, 50)) {
+      const msgDiv = document.getElementById("message");
+      msgDiv.innerText = "Sending you a big virtual hug 🤗 You are never alone!";
+      msgDiv.style.opacity = 1;
+      setTimeout(() => {
+  msgDiv.style.opacity = 0;
+}, 1000);
+    }
+  }
     }
 
     canvas.addEventListener('click', (e) => handleCut(e.offsetX, e.offsetY));
+    canvas.addEventListener('mousedown', (e) => startDrag(e.offsetX, e.offsetY));
+    canvas.addEventListener('mousemove', (e) => moveDrag(e.offsetX, e.offsetY));
+    canvas.addEventListener('mouseup', (e) => endDrag(e.offsetX, e.offsetY));
+    canvas.addEventListener('mouseleave', () => {
+      slices.forEach(slice => slice.dragging = false);
+    });
 
-    function startDrag(x, y) {
-      slices.forEach(slice => {
-        if (slice.eaten) return;
-        const localX = x - slice.offsetX;
-        const localY = y - slice.offsetY;
-        const dx = localX - centerX;
-        const dy = localY - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        let angle = Math.atan2(dy, dx);
-        if (angle < 0) angle += 2 * Math.PI;
+    canvas.addEventListener('touchstart', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  startDrag(x, y);
+}, { passive: true });
 
-        if (distance < radius && angle > slice.angleStart && angle < slice.angleEnd) {
-          slice.dragging = true;
-          slice.startX = x;
-          slice.startY = y;
-        }
-      });
-    }
+canvas.addEventListener('touchmove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  moveDrag(x, y);
+  e.preventDefault(); // Prevent scrolling while dragging
+}, { passive: false });
 
-    let overlappingSlice = slices.find(s => {
-  if (s === slice || s.eaten) return false;
-  const dx = (centerX + slice.offsetX) - (centerX + s.offsetX);
-  const dy = (centerY + slice.offsetY) - (centerY + s.offsetY);
-  return Math.sqrt(dx * dx + dy * dy) < 30; // Small collision radius
+canvas.addEventListener('touchend', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const touch = e.changedTouches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+  endDrag(x, y);
 });
 
-if (overlappingSlice) {
-  slice.eaten = true; // Auto drop to "eat"
-  showMessage(); // trigger message
-}
 
-function showMessage() {
-  if (messageIndex < birthdayMessages.length) {
-    const msgDiv = document.getElementById("message");
-    msgDiv.style.opacity = 0;
-    setTimeout(() => {
-      msgDiv.innerText = birthdayMessages[messageIndex];
-      msgDiv.style.opacity = 1;
-      messageIndex++;
-    }, 400);
-  }
-}
+    function startDrag(x, y) {
+  slices.forEach(slice => {
+    if (slice.eaten) return;
 
+    const dx = x - (centerX + slice.offsetX);
+    const dy = y - (centerY + slice.offsetY);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    let angle = Math.atan2(dy, dx);
+    if (angle < 0) angle += 2 * Math.PI;
 
-
-    function moveDrag(x, y) {
-      slices.forEach(slice => {
-        if (slice.dragging) {
-          slice.offsetX += x - slice.startX;
-          slice.offsetY += y - slice.startY;
-          slice.startX = x;
-          slice.startY = y;
-          drawCake();
-        }
-      });
+    if (distance < radius && angle >= slice.angleStart && angle < slice.angleEnd) {
+      slice.dragging = true;
+      slice.startX = x;
+      slice.startY = y;
     }
+  });
+}
+
+function moveDrag(x, y) {
+  slices.forEach(slice => {
+    if (slice.dragging) {
+      const dx = x - slice.startX;
+      const dy = y - slice.startY;
+      slice.offsetX += dx;
+      slice.offsetY += dy;
+      slice.startX = x;
+      slice.startY = y;
+      drawCake();
+    }
+  });
+}
+
 
     function endDrag(x, y) {
       slices.forEach(slice => {
@@ -380,64 +454,74 @@ function showMessage() {
           } else if (isNearZone(centerX + slice.offsetX, centerY + slice.offsetY, dropZones.feed, 60)) {
             slice.eaten = true;
             interacted = true;
-            const remaining = slices.filter(s => !s.eaten);
-            if (remaining.length > 0) {
-              const first = remaining[0];
-              first.offsetX = dropZones.eat.x - centerX;
-              first.offsetY = dropZones.eat.y - centerY;
-              first.eaten = true;
+          } else if (isNearZone(centerX + slice.offsetX, centerY + slice.offsetY, dropZones.hug, 60)) {
+            slice.eaten = true; // Mark as used
+            interacted = true;
+            
+            // Show hug message
+            const msgDiv = document.getElementById("message");
+            msgDiv.innerText = "Sending you a big virtual hug 🤗 You are never alone!";
+            msgDiv.style.opacity = 1;
+          }
+
+          if (interacted) {
+             interactionCount++;
+               if (interactionCount >= 2 && !aloneShown) {
+              document.getElementById("aloneContainer").style.display = "block";
+              aloneShown = true;
+            }
+            if (!firstSliceInteracted) {
+              firstSliceInteracted = true;
+              burstConfetti();
+            }
+
+            if (messageIndex < birthdayMessages.length) {
+              const msgDiv = document.getElementById("message");
+              msgDiv.style.opacity = 0;
+              setTimeout(() => {
+                msgDiv.innerText = birthdayMessages[messageIndex];
+                msgDiv.style.opacity = 1;
+                messageIndex++;
+                 setTimeout(() => {
+    msgDiv.style.opacity = 0;
+  }, 1000);
+              }, 400);
             }
           }
-
-          if (interacted && messageIndex < birthdayMessages.length) {
-            const msgDiv = document.getElementById("message");
-            msgDiv.style.opacity = 0;
-            setTimeout(() => {
-              msgDiv.innerText = birthdayMessages[messageIndex];
-              msgDiv.style.opacity = 1;
-              messageIndex++;
-            }, 400);
-          }
         }
-
         slice.dragging = false;
       });
 
       drawCake();
     }
 
-    canvas.addEventListener('mousedown', (e) => startDrag(e.offsetX, e.offsetY));
-    canvas.addEventListener('mousemove', (e) => moveDrag(e.offsetX, e.offsetY));
-    canvas.addEventListener('mouseup', (e) => endDrag(e.offsetX, e.offsetY));
+     function handleAloneAnswer(isYes) {
+      const responseDiv = document.getElementById("aloneResponse");
+      if (isYes) {
+        responseDiv.innerText = "Then Call Me 📞";
+      } else {
+        responseDiv.innerText = "I'm happy now 😊";
+      }
+    }
 
-    canvas.addEventListener('touchstart', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.touches[0].clientX - rect.left;
-      const y = e.touches[0].clientY - rect.top;
-      startDrag(x, y);
-    });
+    function burstConfetti() {
+      for (let i = 0; i < 50; i++) {
+        confetti.push({
+          x: centerX,
+          y: centerY,
+          r: Math.random() * 6 + 3,
+          d: Math.random() * 15 + 5,
+          color: `hsl(${Math.random() * 360}, 80%, 60%)`,
+          tilt: Math.random() * 20 - 10
+        });
+      }
+    }
 
-    canvas.addEventListener('touchmove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.touches[0].clientX - rect.left;
-      const y = e.touches[0].clientY - rect.top;
-      moveDrag(x, y);
-      e.preventDefault();
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const x = e.changedTouches[0].clientX - rect.left;
-      const y = e.changedTouches[0].clientY - rect.top;
-      endDrag(x, y);
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      slices.forEach(slice => slice.dragging = false);
-    });
-
-    // 🎊 Confetti
+    // 🎊 Confetti & 🎆 Fireworks
     let confetti = [];
+    let fireworks = [];
+    let isFireworksActive = false;
+
     function startConfetti() {
       setInterval(() => {
         confetti.push({
@@ -452,9 +536,59 @@ function showMessage() {
       requestAnimationFrame(updateConfetti);
     }
 
+    function startFireworks() {
+      isFireworksActive = true;
+      for (let i = 0; i < 5; i++) {
+        launchFirework();
+      }
+    }
+
+    function launchFirework() {
+      const particles = [];
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height / 2;
+
+      for (let i = 0; i < 100; i++) {
+        particles.push({
+          x,
+          y,
+          radius: Math.random() * 2 + 1,
+          dx: Math.cos(i * 2 * Math.PI / 100) * (Math.random() * 3 + 2),
+          dy: Math.sin(i * 2 * Math.PI / 100) * (Math.random() * 3 + 2),
+          life: 60,
+          color: `hsl(${Math.random() * 360}, 100%, 60%)`
+        });
+      }
+
+      fireworks.push(particles);
+    }
+
+    function updateFireworks() {
+      if (!isFireworksActive) return;
+      fireworks.forEach((burst, i) => {
+        burst.forEach(p => {
+          p.x += p.dx;
+          p.y += p.dy;
+          p.life--;
+        });
+        fireworks[i] = burst.filter(p => p.life > 0);
+      });
+      fireworks = fireworks.filter(b => b.length > 0);
+    }
+
     function updateConfetti() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       drawCake();
+      updateFireworks();
+
+      fireworks.forEach(burst => {
+        burst.forEach(p => {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+          ctx.fillStyle = p.color;
+          ctx.fill();
+        });
+      });
 
       confetti.forEach((c, i) => {
         ctx.beginPath();
@@ -462,11 +596,43 @@ function showMessage() {
         ctx.fillStyle = c.color;
         ctx.fill();
         c.y += c.d * 0.5;
-        c.tilt += Math.sin(c.y * 0.1);
-        if (c.y > canvas.height) confetti.splice(i, 1);
+        c.tilt += Math.sin(c.y / 20) * 0.5;
+
+        if (c.y > canvas.height) {
+          confetti[i] = {
+            x: Math.random() * canvas.width,
+            y: 0,
+            r: Math.random() * 6 + 4,
+            d: Math.random() * 10 + 5,
+            color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+            tilt: Math.random() * 10 - 10
+          };
+        }
       });
+
       requestAnimationFrame(updateConfetti);
     }
+
+    document.getElementById('blowButton').addEventListener('click', () => {
+      candleLit = false;
+      drawCake();
+      audio.play();
+      document.getElementById("tasteMsg").innerText = "Candles blown! Tap cake to cut. 🎉";
+      startFireworks();
+    });
+
+    // Floating hearts
+    function createHeart() {
+      const heart = document.createElement('div');
+      heart.classList.add('heart');
+      heart.style.left = Math.random() * 100 + 'vw';
+      heart.style.bottom = '0px';
+      document.body.appendChild(heart);
+
+      setTimeout(() => heart.remove(), 6000);
+    }
+
+    setInterval(createHeart, 800);
   </script>
 </body>
 </html>
