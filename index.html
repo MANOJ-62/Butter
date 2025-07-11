@@ -136,7 +136,8 @@
     <div class="container">
       <div id="tasteMsg"></div>
       <h1 class="glow">🎉 Happy Birthday, <span class="name">Sathya</span>! 🎂</h1>
-      <p class="subtitle">Even if I’m not there, you’re never alone, my dear Butter — your birthday is about the people who love you, and I’m always here. Let’s celebrate together! 💖</p>
+      <!-- <p class="subtitle">Even if I’m not there, you’re never alone, my dear Butter — your birthday is about the people who love you, and I’m always here. Let’s celebrate together! 💖</p> -->
+      <p class="subtitle">Even if I’m not there, I'll never leave you alone, my dear Butter - your birthday is about the people who loves you, and I’m always here. Let’s celebrate together! 💖</p>
       <canvas id="cakeCanvas" width="600" height="600"></canvas>
       <p>Tap the cake to cut it after blowing the candles! 🍰</p>
       <button id="blowButton">Blow Candles 🎈</button>
@@ -184,6 +185,7 @@
 
     const numCandles = 6;
     const audio = new Audio('birthday-song.mp3');
+const greetingAudio = new Audio('yanji.mp3'); // Add this line
 
     const photoImage = new Image();
     photoImage.src = 'her-photo.jpeg';
@@ -524,10 +526,15 @@ function moveDrag(x, y) {
 
     function openGreeting() {
   document.getElementById('greetingModal').style.display = 'flex';
+  greetingAudio.currentTime = 0;
+  greetingAudio.loop = true;
+  greetingAudio.play();
 }
 
 function closeGreeting() {
   document.getElementById('greetingModal').style.display = 'none';
+  greetingAudio.pause();
+  greetingAudio.currentTime = 0;
 }
 
     function burstConfetti() {
